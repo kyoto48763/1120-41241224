@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>成績輸入</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+</head>
+<body>
+    <h2>成績輸入系統</h2>
+    <form id="gradeForm">
+        <label for="studentName">學生姓名：</label>
+        <input type="text" id="studentName" required>
+        <br><br>
+        <label for="studentScore">成績：</label>
+        <input type="number" id="studentScore" required>
+        <br><br>
+        <button type="submit">提交成績</button>
+    </form>
+    <div id="resultMessage"></div>
+
+    <h2>成績列表</h2>
+    <ul id="gradeList"></ul>
+
+    <script>
+        // Firebase 配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyD7Epr_1uQxEmp2bD7ZaF1L5nQUiL2Lrz0",
+            authDomain: "game1-4f90a.firebaseapp.com",
+            databaseURL: "https://game1-4f90a-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "game1-4f90a",
+            storageBucket: "game1-4f90a.firebasestorage.app",
+            messagingSenderId: "975429395685",
+            appId: "1:975429395685:web:4d2fa0442947dd2310600c",
+            measurementId: "G-9V1Z55Y0XY"
+        };
+
+        // 初始化 Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // 表單提交事件
+        document.getElementById('gradeForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const studentName = document.getElementById('studentName').value.trim();
+            const studentScore = document.getElementById('studentScore').value;
+
+            // 檢查學生姓名是否為空
+            if (studentName === "") {
+                document.getElementById('resultMessage').textContent = '學生姓名不能為空。';
+                return;
+            }
+
+            // 將成績寫入 Firebase Realtime Database
+            firebase.database().ref('grades/' + studentName).set({
+                score: studentScore
+            }).then(() => {
+                document.getElementById('resultMessage').textContent = '成績已成功提交！';
+                document.getElementById('gradeForm').reset();
+            }).catch((error) => {
+                document.getElementById('resultMessage').textContent = '提交失敗：' + error.message;
+            });
+        });
+
+        // 從 Firebase 讀取並顯示成績資料
+        const gradeList = document.getElementById('gradeList');
+        firebase.database().ref('grades').on('value', (snapshot) => {
+            gradeList.innerHTML = ''; // 清空成績列表
+            const grades = snapshot.val();
+            if (grades) {
+                for (let student in grades) {
+                    const li = document.createElement('li');
+                    li.textContent = `${student}: ${grades[student].score}`;
+                    gradeList.appendChild(li);
+                }
+            } else {
+                const li = document.createElement('li');
+                li.textContent = '目前沒有成績資料。';
+                gradeList.appendChild(li);
+            }
+        });
+    </script>
+</body>
+</html>
